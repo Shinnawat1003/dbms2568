@@ -420,3 +420,19 @@ ORDER BY created;
 
 
 ```
+
+
+| กรณีการทดสอบ (Indexing Strategy) | Query No. | Execution Time (ms) | Scan Method (จาก Explain Plan) | ข้อสังเกต / การเปลี่ยนแปลง |
+----------------------------------|-----------|---------------------|--------------------------------|------------------------|
+| Case A: No Index (มีเฉพาะ Primary Key) | Q1|  |  | จุดเริ่มต้น (Baseline) | |
+| | Q2| | | 
+| | Q3| | | 
+| | Q5| | | 
+| Case B: Single Index| Q1| | | เปรียบเทียบกับ Q1 Case A
+| CREATE INDEX ON post(account_id);| Q2| | | 
+| Case C: Composite Index| Q3| | | เปรียบเทียบกับ Q3 Case A
+| "CREATE INDEX ON post(thread_id, visible);"| Q4| | | 
+| Case D: Partial Index| Q3| | | สังเกตขนาด Index ที่เล็กลง
+| "CREATE INDEX ON post(thread_id, account_id)  WHERE visible = TRUE;"| Q4| | | 
+| Case E: Index for Sorting| Q5| | | สังเกตว่ามีขั้นตอน Sort หรือไม่
+| "CREATE INDEX ON post(thread_id, created)  WHERE visible = TRUE;"| | | | 
