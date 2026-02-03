@@ -70,7 +70,7 @@ Build the image and run it with strict resource limits.
 
 ```bash
 # Build the custom image (This will take a few minutes)
-docker build -t pg18-512mb .
+docker build -t pg18-512mb --no-cache .
 
 # Run the container with 512MB RAM and 0.5 CPU Core
 docker run --rm --name pg_30_lab \
