@@ -12,6 +12,7 @@ RUN apk add --no-cache \
     openssl-dev \
     zlib-dev \
     perl \
+    readline-dev \
     linux-headers
 
 # WORKDIR /usr/src/postgresql
@@ -22,7 +23,7 @@ RUN curl -o pg18.tar.gz https://ftp.postgresql.org/pub/source/v18.0/postgresql-1
 RUN ./configure --prefix=/usr/local/pgsql \
     --with-openssl \
     --with-liburing \
-    --without-readline \
+    --with-readline \
     --without-icu \
     CFLAGS="-O2 -march=native"
 
