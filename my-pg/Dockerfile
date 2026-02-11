@@ -49,7 +49,7 @@ RUN adduser -D postgres && \
     chown -R postgres:postgres /var/lib/postgresql /usr/local/pgsql
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 USER postgres
 WORKDIR /var/lib/postgresql

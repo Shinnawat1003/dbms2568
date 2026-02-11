@@ -73,17 +73,19 @@ Build the image and run it with strict resource limits.
 docker build -t pg18-512mb --no-cache .
 
 # Run the container with 512MB RAM and 0.5 CPU Core
-docker run --rm --name pg_30_lab \
-    --memory="512m" \
-    --memory-swap="512m" \
-    --cpus="2.0" \
-    --volume=./DATA:/var/lib/postgresql/data \
-    --security-opt seccomp=unconfined \
-    pg18-512mb \
-    postgres -D /var/lib/postgresql/data \
-    -c max_connections=30 \
-    -c work_mem=16MB \
-    -c shared_buffers=128MB
+docker run --rm --name pg_30_lab `
+  --user root `
+  -e PGDATA=/var/lib/postgresql/data/pgdata `
+  --memory="512m" `
+  --memory-swap="512m" `
+  --cpus="2.0" `
+  --volume "${PWD}/DATA:/var/lib/postgresql/data" `
+  --security-opt seccomp=unconfined `
+  pg18-512mb `
+  sh -c "chown -R postgres:postgres /var/lib/postgresql/data && exec su-exec postgres 
+  postgres -c max_connections=30 -c work_mem=16MB -c shared_buffers=128MB"
+
+
 
 ```
 
