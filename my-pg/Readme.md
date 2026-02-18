@@ -74,18 +74,17 @@ docker build -t pg18-512mb --no-cache .
 
 # Run the container with 512MB RAM and 0.5 CPU Core
 docker run --rm --name pg_30_lab `
-  --user root `
-  -e PGDATA=/var/lib/postgresql/data/pgdata `
   --memory="512m" `
   --memory-swap="512m" `
   --cpus="2.0" `
-  --volume "${PWD}/DATA:/var/lib/postgresql/data" `
+  --volume="${PWD}/DATA:/var/lib/postgresql/data" `
   --security-opt seccomp=unconfined `
+  -e PGDATA=/var/lib/postgresql/data/pgdata `
   pg18-512mb `
-  sh -c "chown -R postgres:postgres /var/lib/postgresql/data && exec su-exec postgres 
-  postgres -c max_connections=30 -c work_mem=16MB -c shared_buffers=128MB"
-
-
+  postgres -D /var/lib/postgresql/data/pgdata `
+  -c max_connections=30 `
+  -c work_mem=5MB `
+  -c shared_buffers=400MB
 
 ```
 
@@ -94,7 +93,7 @@ docker run --rm --name pg_30_lab `
 Access the container and modify the settings to fit the 512MB RAM budget.
 
 ```bash
-# Enter the container shell
+# Enter the container shell 
 docker exec -it pg_30_lab sh
 
 ```
@@ -118,7 +117,7 @@ Run a benchmark to see if your configuration remains stable under load.
 # 1. Initialize test data (Scale factor 10)
 docker exec -it pg_30_lab pgbench -i -s 10 postgres
 
-# 2. Run the test for 60 seconds with 20 clients
+# 2. Run the test for 60 seconds with 20 clients sall 2
 docker exec -it pg_30_lab pgbench -c 20 -j 2 -T 60 -P 5 postgres
 ```
 

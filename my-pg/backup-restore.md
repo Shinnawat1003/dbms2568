@@ -24,6 +24,21 @@ docker run --rm --name pg_30_lab \
     -c max_connections=10 \
     -c work_mem=16MB \
     -c shared_buffers=128MB
+
+docker run --rm --name pg_30_lab `
+  --memory="512m" `
+  --memory-swap="512m" `
+  --cpus="2.0" `
+  -v ${PWD}/DATA:/var/lib/postgresql/data `
+  -v ${PWD}/BACKUP:/backup `
+  --security-opt seccomp=unconfined `
+  -e PGDATA=/var/lib/postgresql/data/pgdata `
+  pg18-512mb `
+  postgres -D /var/lib/postgresql/data/pgdata `
+  -c max_connections=10 `
+  -c work_mem=16MB `
+  -c shared_buffers=128MB
+
 ```
 
 
@@ -90,7 +105,7 @@ Logout from database
 ### 2) Backup Database from master
 
 ```sh
-pg_dump -U STUDENT -h 172.16.2.117 --no-owner  -v -d dvdrental_master > /backup/dvdrental_master_backup.sql
+pg_dump -U 6610301003 -h 172.16.2.117 --no-owner  -v -d dvdrental_master > /backup/dvdrental_master_backup.sql
 ```
 
 Check backup file
@@ -148,7 +163,7 @@ dvdrental=#
 
 Insert Actor 
 ```sql
-INSERT INTO actor (first_name, last_name) values ('Your Name', 'Your Last Name');
+INSERT INTO actor (first_name, last_name) values ('Shinawat', 'Kitta');
 ```
 
 Add you as actor in one of film.
@@ -163,7 +178,7 @@ Output:
 ```
 
 ```sql
-INSERT INTO film_actor (actor_id, film_id) VALUES (201, (SELECT floor(random() * 1000) + 1));
+INSERT INTO film_actor (actor_id, film_id) VALUES (202, (SELECT floor(random() * 1000) + 1));
 ```
 
 Get the film that you've acted.
@@ -171,7 +186,7 @@ Get the film that you've acted.
 ```sql
 SELECT actor.*, film.title 
 FROM film_actor JOIN film ON film_actor.film_id=film.film_id 
-JOIN actor ON film_actor.actor_id=actor.actor_id AND actor.actor_id=201; 
+JOIN actor ON film_actor.actor_id=actor.actor_id AND actor.actor_id=202; 
 ```
 
 Output:
@@ -211,36 +226,38 @@ pg_dump -U postgres -d dbname --no-owner  -Fc -v -d dvdrental -f /backup/dvdrent
 
 Restore with simple sql file.
 ```sh
-psql -U STUDENT -h 172.16.2.117 -d db_STUDENT < /backup/dvdrental_simple.sql
+psql -U 6610301003 -h 172.16.2.117 -d db_6610301003 < /backup/dvdrental_simple.sql
 ```
 
 Restore with pg_restore with simple sql
 ```sh
-pg_restore -U STUDENT -h 172.16.2.117 --format=plain -v -d db_STUDENT --clean /backup/dvdrental_simple.sql
+pg_restore -U 6610301003 -h 172.16.2.117 --format=plain -v -d db_6610301003 --clean /backup/dvdrental_simple.sql
 ```
 
 Restore with psql with plan sql
 ```sh
-psql -U STUDENT -h 172.16.2.117 -d db_STUDENT < /backup/dvdrental_plan.sql
+psql -U 6610301003 -h 172.16.2.117 -d db_6610301003 < /backup/dvdrental_plan.sql
 ```
 
 Restore with pg_dump on custome format
 ```sh
-pg_restore -U STUDENT -h 172.16.2.117 -v -d db_STUDENT --no-owner --clean /backup/dvdrental_custom.dump
+pg_restore -U 6610301003 -h 172.16.2.117 -v -d db_6610301003 --no-owner --clean /backup/dvdrental_custom.dump
 ```
 
 ```sql
-psql -U STUDENT -h 172.16.2.117 -d db_STUDENT
+psql -U 6610301003 -h 172.16.2.117 -d db_6610301003
 ```
 
 ```sql
 SELECT actor.*, film.title 
 FROM film_actor JOIN film ON film_actor.film_id=film.film_id 
-JOIN actor ON film_actor.actor_id=actor.actor_id AND actor.actor_id=201
+JOIN actor ON film_actor.actor_id=actor.actor_id AND actor.actor_id=202;
 ```
 
 Your Output:
 
 ```
-
+ actor_id | first_name | last_name |        last_update         |    title    
+----------+------------+-----------+----------------------------+-------------
+      202 | Shinawat   | Kitta     | 2026-02-11 04:51:48.510231 | Flying Hook
 ```

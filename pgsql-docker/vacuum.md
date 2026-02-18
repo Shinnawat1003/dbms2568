@@ -112,8 +112,14 @@ SELECT pg_size_pretty(pg_relation_size('post')) AS initial_size;
 SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'post';
 
 -- Output
+ initial_size 
+--------------
+ 26 MB
+(1 row)
 
-
+ n_live_tup | n_dead_tup 
+------------+------------
+     100000 |          0
 ```
 
 ## Step 2: Create Massive Bloat
@@ -131,8 +137,14 @@ SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'post';
 
 
 -- Output
+ initial_size 
+--------------
+ 169 MB
+(1 row)
 
-
+ n_live_tup | n_dead_tup
+------------+------------
+     100000 |     499964
 ```
 
 ## Step 3: Verify the Performance Hit
@@ -141,9 +153,22 @@ EXPLAIN ANALYZE SELECT count(*) FROM post;
 -- Note the increased Execution Time due to scanning dead rows.
 
 -- Output 
-
-
-
+                                                                QUERY PLAN
+------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=25979.16..25979.17 rows=1 width=8) (actual time=32.565..36.587 rows=1.00 loops=1)
+   Buffers: shared hit=21604
+   ->  Gather  (cost=25978.95..25979.16 rows=2 width=8) (actual time=32.441..36.578 rows=3.00 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=21604
+         ->  Partial Aggregate  (cost=24978.95..24978.96 rows=1 width=8) (actual time=22.876..22.877 rows=1.00 loops=3)
+               Buffers: shared hit=21604
+               ->  Parallel Seq Scan on post  (cost=0.00..24303.96 rows=269996 width=0) (actual time=8.098..21.213 rows=33333.33 loops=3)
+                     Buffers: shared hit=21604
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.230 ms
+ Execution Time: 36.770 ms
 ```
 
 ## Step 4: Run Standard VACUUM
@@ -152,8 +177,39 @@ VACUUM (VERBOSE, ANALYZE) post;
 -- Check size: It won't shrink, but n_dead_tup will go to 0.
 
 -- Output
-
-
+INFO:  vacuuming "db_6610301003.public.post"
+INFO:  finished vacuuming "db_6610301003.public.post": index scans: 0
+pages: 0 removed, 21604 remain, 1 scanned (0.00% of total), 0 eagerly scanned
+tuples: 0 removed, 100000 remain, 0 are dead but not yet removable
+removable cutoff: 6323, which was 0 XIDs old when operation ended
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 25 hits, 0 reads, 0 dirtied
+WAL usage: 0 records, 0 full page images, 0 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+INFO:  vacuuming "db_6610301003.pg_toast.pg_toast_27274"
+INFO:  finished vacuuming "db_6610301003.pg_toast.pg_toast_27274": index scans: 0
+pages: 0 removed, 0 remain, 0 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 0 remain, 0 are dead but not yet removable
+removable cutoff: 6323, which was 0 XIDs old when operation ended
+new relfrozenxid: 6323, which is 19 XIDs ahead of previous value
+frozen: 0 pages from table (100.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (100.00% of total) had 0 dead item identifiers removed
+avg read rate: 14.741 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 25 hits, 1 reads, 0 dirtied
+WAL usage: 1 records, 0 full page images, 258 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+INFO:  analyzing "public.post"
+INFO:  "post": scanned 21604 of 21604 pages, containing 100000 live rows and 0 dead rows; 30000 rows in sample, 100000 estimated total rows
+INFO:  finished analyzing table "db_6610301003.public.post"
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 21832 hits, 0 reads, 0 dirtied
+WAL usage: 8 records, 0 full page images, 3429 bytes, 0 buffers full
+system usage: CPU: user: 0.08 s, system: 0.00 s, elapsed: 0.09 s
+VACUUM
 ```
 
 ```sql
@@ -163,6 +219,14 @@ SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'post';
 
 
 -- Output
+ initial_size 
+--------------
+ 169 MB
+(1 row)
+
+ n_live_tup | n_dead_tup
+------------+------------
+     100000 |          0
 ```
 ## Step 5: Run VACUUM FULL
 ```sql
